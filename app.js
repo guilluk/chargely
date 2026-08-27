@@ -6,6 +6,11 @@ const modalBayNumber = document.getElementById("modalBayNumber");
 const modalStatus = document.getElementById("modalStatus");
 const modalInfo = document.getElementById("modalInfo");
 const modalAction = document.getElementById("modalAction");
+const availableCount = document.getElementById("availableCount");
+const chargingCount = document.getElementById("chargingCount");
+const endingSoonCount = document.getElementById("endingSoonCount");
+const outOfOrderCount = document.getElementById("outOfOrderCount");
+const modalReport = document.getElementById("modalReport");
 
 let selectedBay = null;
 
@@ -32,6 +37,38 @@ const bayData = {
   }
 };
 
+function updateStatusSummary() {
+
+  let available = 0;
+  let charging = 0;
+  let endingSoon = 0;
+  let outOfOrder = 0;
+
+  bays.forEach((bay) => {
+
+    if (bay.classList.contains("available")) {
+      available++;
+
+    } else if (bay.classList.contains("charging")) {
+      charging++;
+
+    } else if (bay.classList.contains("ending-soon")) {
+      endingSoon++;
+
+    } else if (bay.classList.contains("out-of-order")) {
+      outOfOrder++;
+    }
+
+  });
+
+  availableCount.textContent = available;
+  chargingCount.textContent = charging;
+  endingSoonCount.textContent = endingSoon;
+  outOfOrderCount.textContent = outOfOrder;
+}
+
+updateStatusSummary();
+
 // Open bay modal
 bays.forEach((bay) => {
   bay.addEventListener("click", () => {
@@ -50,13 +87,32 @@ bays.forEach((bay) => {
     modalStatus.textContent = data.status;
     modalInfo.textContent = data.info;
 
-    // Show button only for available bays
-    if (data.status === "Available") {
-      modalAction.style.display = "block";
-      modalAction.textContent = "Start Charging";
-    } else {
-      modalAction.style.display = "none";
-    }
+    // Configure action button based on bay status
+if (data.status === "Available") {
+  modalAction.style.display = "block";
+  modalAction.textContent = "Start Charging";
+
+} else if (data.status === "Charging") {
+  modalAction.style.display = "block";
+  modalAction.textContent = "Finish Charging";
+
+} else if (data.status === "Ending Soon") {
+  modalAction.style.display = "block";
+  modalAction.textContent = "Make Available";
+
+} else if (data.status === "Out of Order") {
+
+  modalAction.style.display = "block";
+  modalAction.textContent = "Mark as Available";
+
+}
+
+// Show Report Issue only for available bays
+if (data.status === "Available") {
+  modalReport.style.display = "block";
+} else {
+  modalReport.style.display = "none";
+}
 
     // Set status colour
     if (data.status === "Charging") {
@@ -95,37 +151,129 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-// Start charging
+// Bay action button
 modalAction.addEventListener("click", () => {
   if (!selectedBay) return;
 
-  // Update simulated data
-  bayData[selectedBay] = {
-    status: "Charging",
-    info: "Vehicle currently charging"
+  const currentData = bayData[selectedBay] || {
+    status: "Available",
+    info: "Ready to use"
   };
 
-  // Find the corresponding bay on the map
+  let newStatus;
+  let newInfo;
+
+  // Decide the next status
+  if (currentData.status === "Available") {
+    newStatus = "Charging";
+    newInfo = "Vehicle currently charging";
+
+  } else if (currentData.status === "Charging") {
+    newStatus = "Ending Soon";
+    newInfo = "Charging completed — bay will be available shortly";
+
+  } else if (currentData.status === "Ending Soon") {
+    newStatus = "Available";
+    newInfo = "Ready to use";
+  }
+
+  else if (currentData.status === "Out of Order") {
+  newStatus = "Available";
+  newInfo = "Ready to use";
+  }
+
+  // Save the new simulated data
+  bayData[selectedBay] = {
+    status: newStatus,
+    info: newInfo
+  };
+
+  // Find the bay on the map
   const bayElement = Array.from(bays).find(
     (bay) => bay.textContent.trim() === selectedBay
   );
 
-  // Update the bay colour on the map
+  // Remove old status classes
   if (bayElement) {
     bayElement.classList.remove(
       "available",
+      "charging",
       "ending-soon",
       "out-of-order"
     );
 
-    bayElement.classList.add("charging");
+    // Add the new status class
+    if (newStatus === "Charging") {
+      bayElement.classList.add("charging");
+
+    } else if (newStatus === "Ending Soon") {
+      bayElement.classList.add("ending-soon");
+
+    } else {
+      bayElement.classList.add("available");
+    }
+  }
+
+  updateStatusSummary();
+
+  // Update modal text
+  modalStatus.textContent = newStatus;
+  modalInfo.textContent = newInfo;
+
+  // Update modal colour and button
+  if (newStatus === "Charging") {
+    modalStatus.style.color = "#60a5fa";
+    modalAction.textContent = "Finish Charging";
+
+  } else if (newStatus === "Ending Soon") {
+    modalStatus.style.color = "#facc15";
+    modalAction.textContent = "Make Available";
+
+  } else {
+    modalStatus.style.color = "#4ade80";
+    modalAction.textContent = "Start Charging";
+  }
+});
+
+// Report issue
+modalReport.addEventListener("click", () => {
+  if (!selectedBay) return;
+
+  // Update bay data
+  bayData[selectedBay] = {
+    status: "Out of Order",
+    info: "This charging bay is currently unavailable"
+  };
+
+  // Find bay on map
+  const bayElement = Array.from(bays).find(
+    (bay) => bay.textContent.trim() === selectedBay
+  );
+
+  // Update bay colour
+  if (bayElement) {
+    bayElement.classList.remove(
+      "available",
+      "charging",
+      "ending-soon"
+    );
+
+    bayElement.classList.add("out-of-order");
   }
 
   // Update modal
-  modalStatus.textContent = "Charging";
-  modalStatus.style.color = "#60a5fa";
-  modalInfo.textContent = "Vehicle currently charging";
+  modalStatus.textContent = "Out of Order";
+  modalStatus.style.color = "#f87171";
 
-  // Hide button
-  modalAction.style.display = "none";
+  modalInfo.textContent = "This charging bay is currently unavailable";
+
+  // Change main action
+  modalAction.style.display = "block";
+  modalAction.textContent = "Mark as Available";
+
+  // Hide report button
+  modalReport.style.display = "none";
+
+  // Update summary
+  updateStatusSummary();
 });

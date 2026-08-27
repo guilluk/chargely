@@ -179,3 +179,92 @@ body {
 
   cursor: pointer;
 }
+
+.map-legend {
+  position: absolute;
+  right: 165px;
+  bottom: 15px;
+
+  background: rgba(17, 24, 39, 0.42);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+
+  padding: 10px 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  z-index: 20;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  color: white;
+}
+
+.legend-colour {
+  width: 12px;
+  height: 12px;
+
+  border-radius: 3px;
+}
+
+.legend-colour.available {
+  background: #22c55e;
+}
+
+.legend-colour.charging {
+  background: #3b82f6;
+}
+
+.legend-colour.ending-soon {
+  background: #eab308;
+}
+
+.legend-colour.out-of-order {
+  background: #ef4444;
+}
+
+.status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.summary {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal-report {
+  display: none;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+
+  background: transparent;
+  color: #f87171;
+
+  border: 1px solid rgba(248, 113, 113, 0.7);
+  border-radius: 10px;
+
+  font-size: 15px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+.modal-report:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
